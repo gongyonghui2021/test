@@ -16,10 +16,8 @@ library(vcd)
 
 
 ## Results
-## For Specific questions
 #### 1. Does the number of COVID tests a student has taken in the 
-
-I use goodfit which tests for discrete data in vcd package, and found pValue <0.05, so refuse H0 which means  the number of COVID tests a student has taken in the past two months does't follow a Poisson distribution. 
+so refuse H0 which means  the number of COVID tests a student has taken in the past two months does't follow a Poisson distribution. 
 ```{r,message=FALSE,warning=FALSE}
 DATA2x02 <- read_csv("./DATA2x02 survey (Responses) - Form responses 1.csv")
 DATA2x02 <-DATA2x02[which(!is.na(DATA2x02[,2])),]
@@ -29,101 +27,10 @@ lines(dpois(x=min(COVID_tests_number):max(COVID_tests_number), lambda=mean(COVID
 legend("topright", c("Probability of COVID tests in the past two months ", "Poisson Distribution Curve"),  fill=c(col=16, col=2))
 
 gf <- goodfit(COVID_tests_number,type= "poisson")
-summary(gf)
+
 plot(gf,main="Count data vs Poisson distribution")
 
 ```
-
-
-
-####  2.1. whether the COVID vaccination status have different the times COVID test 
-H0: COVID vaccination status have the same COVID test times.
-
-H1: COVID vaccination status have different COVID test times
-
-
-I use analysis of variance to test if different COVID vaccination status have the same COVID test times, and found pValue is 0.00107 which is significant less than 0.05, so refuse H0, and different COVID vaccination status have different COVID test times. In addition, the COVID vaccination status of 'Not yet, but I want to' is significally different with that of 'I'm fully vaccinated' and 'I'm partially vaccinated'.
-
-```{r, message=FALSE,warning=FALSE}
-candidateData <- DATA2x02[,c(2,7,8,12,14,17,18,24)]
-colnames(candidateData) <-c("COVID_test","mathematical","R_coding","COVID_vaccination","Gender","stressed","loneliness","exercising")
-library(ggplot2)
-
-aov1 <- aov(COVID_test ~ COVID_vaccination, candidateData)   
-summary(aov1)
-
-tukey <- TukeyHSD(aov1)
-tukey = as.data.frame(tukey$COVID_vaccination)
-tukey$pair = rownames(tukey)
-
-ggplot(tukey, aes(colour=cut(`p adj`, c(0, 0.01, 0.05, 1), 
-                           label=c("p<0.01","p<0.05","Non-Sig")))) +
-    theme_bw(base_size = 16)+
-    geom_hline(yintercept=0, lty="11", colour="grey30",size = 1) +
-    geom_errorbar(aes(pair, ymin=lwr, ymax=upr), width=0.2,size = 1) +
-    geom_point(aes(pair, diff),size = 2) +
-    labs(colour="")+
-    theme(axis.text.x = element_text(size =10,angle=90)) +
-    ggtitle('COVID vaccination status vs COVID test times')
-
-
-```
-
-
-####  2.2. whether different gender have different the times COVID test 
-H0: different gender have the same COVID test times.
-
-H1: different gender have different COVID test times
-
-
-I use analysis of variance to test if different Gender have the same COVID test times, and found pValue is 0.689 which is not significant less than 0.05, so recieve H0, and different gender have the same COVID test times. 
-
-
-```{r, message=FALSE,warning=FALSE}
-table(candidateData$Gender)
-pos1 <-which(candidateData$Gender%in%c("f","F","Famale","Femal","female","Female","Woman"))
-pos2 <-which(candidateData$Gender%in%c("M","male","Male","MALE","man","Man"))
-candidateData[pos1,"Gender"] <-"female"
-candidateData[pos2,"Gender"] <-"male"
-pos <-which(candidateData$Gender%in%c("female","male"))
-candidateData2 <-candidateData[pos,]
-
-aov2 <- aov(COVID_test ~ Gender, candidateData2)   
-summary(aov2)
-
-ggplot(candidateData2, aes(x=Gender, y=COVID_test, fill=Gender)) + 
-  geom_boxplot() +
-  ggtitle('Gender vs COVID test times')
-
-```
-
-
-####  2.3. whether the times COVID test related with How many hours each week do you spend exercising
-H0: the times COVID test is not related with How many hours each week do you spend exercising.
-
-H1: the times COVID test is related with How many hours each week do you spend exercising.
-
-
-I use Pearson's product-moment correlationto test if the times COVID test is related with How many hours each week do you spend exercising, and found the correlation efficient is 0.3047 with pValue is 1.038e-05 which is significant less than 0.05, so refuse H0, and the times COVID test is positively related with How many hours each week do you spend exercising.
-
-```{r, message=FALSE,warning=FALSE}
-candidateData <-as.data.frame(candidateData)
-cor.test(candidateData$COVID_test, candidateData$exercising)
-ggplot(candidateData, aes(x=exercising, y=COVID_test)) + 
-  geom_point() +
-  ggtitle('the times COVID test vs How many hours each week do you spend exercising')
-```
-
-
-
-## Conclusion
-In this assignment, we found the following conlusions:
-
-1. The number of COVID tests a student has taken in the past two months does't follow a Poisson distribution.
-2. Different COVID vaccination status have different COVID test times. And the COVID vaccination status of 'Not yet, but I want to' is significally different with that of 'I'm fully vaccinated' and 'I'm partially vaccinated'.
-3. The COVID test times between gender is the same.
-4. The times of COVID test is positively related with How many hours each week do you spend exercising.
-
 
 
 
@@ -131,7 +38,5 @@ In this assignment, we found the following conlusions:
 The following References I used:
 
 1. M. Friendly (2000), Visualizing Categorical Data. SAS Institute, Cary, NC.
-2. Chambers, J. M., Freeny, A and Heiberger, R. M. (1992) Analysis of variance; designed experiments. Chapter 5 of Statistical Models in S eds J. M. Chambers and T. J. Hastie, Wadsworth & Brooks/Cole.
-3. D. J. Best & D. E. Roberts (1975). Algorithm AS 89: The Upper Tail Probabilities of Spearman's rho. Applied Statistics, 24, 377–379. doi: 10.2307/2347111.
-4. Myles Hollander & Douglas A. Wolfe (1973), Nonparametric Statistical Methods. New York: John Wiley & Sons. Pages 185–194 (Kendall and Spearman tests).
+
 
