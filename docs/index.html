@@ -11,7 +11,7 @@
 
 
 
-<title>My Website</title>
+<title>Website Example</title>
 
 <script src="site_libs/header-attrs-2.11/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
@@ -259,14 +259,145 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">My Website</h1>
+<h1 class="title toc-ignore">Website Example</h1>
 
 </div>
 
 
-<p>Hello, Website!</p>
-<p>For more information about simple R Markdown websites, please read the documentation at <a href="https://bookdown.org/yihui/rmarkdown/rmarkdown-site.html" class="uri">https://bookdown.org/yihui/rmarkdown/rmarkdown-site.html</a>.</p>
-<p>Please also note that simple R Markdown sites are <em>not</em> based on <strong>blogdown</strong>. They are probably good for websites with only a few Rmd documents. For larger-scale and more sophisticated websites (such as blogs), you may want to use <strong>blogdown</strong> instead: <a href="https://github.com/rstudio/blogdown" class="uri">https://github.com/rstudio/blogdown</a>.</p>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+</div>
+<div id="results" class="section level2">
+<h2>Results</h2>
+</div>
+<div id="for-specific-questions" class="section level2">
+<h2>For Specific questions</h2>
+<div id="does-the-number-of-covid-tests-a-student-has-taken-in-the" class="section level4">
+<h4>1. Does the number of COVID tests a student has taken in the</h4>
+<p>I use goodfit which tests for discrete data in vcd package, and found pValue &lt;0.05, so refuse H0 which means the number of COVID tests a student has taken in the past two months does’t follow a Poisson distribution.</p>
+<pre class="r"><code>DATA2x02 &lt;- read_csv(&quot;./DATA2x02 survey (Responses) - Form responses 1.csv&quot;)
+DATA2x02 &lt;-DATA2x02[which(!is.na(DATA2x02[,2])),]
+COVID_tests_number = DATA2x02[which(!is.na(DATA2x02[,2])),2][[1]]
+hist(COVID_tests_number, xlab=&quot;times&quot;,probability = TRUE,  main = &quot;Arrivals from Aladdin Street&quot;)
+lines(dpois(x=min(COVID_tests_number):max(COVID_tests_number), lambda=mean(COVID_tests_number)), col=2,lwd=3)
+legend(&quot;topright&quot;, c(&quot;Probability of COVID tests in the past two months &quot;, &quot;Poisson Distribution Curve&quot;),  fill=c(col=16, col=2))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+<pre class="r"><code>gf &lt;- goodfit(COVID_tests_number,type= &quot;poisson&quot;)
+summary(gf)</code></pre>
+<pre><code>## 
+##   Goodness-of-fit test for poisson distribution
+## 
+##                       X^2 df     P(&gt; X^2)
+## Likelihood Ratio 208.5202  8 1.021368e-40</code></pre>
+<pre class="r"><code>plot(gf,main=&quot;Count data vs Poisson distribution&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-1-2.png" width="672" /></p>
+</div>
+<div id="whether-the-covid-vaccination-status-have-different-the-times-covid-test" class="section level4">
+<h4>2.1. whether the COVID vaccination status have different the times COVID test</h4>
+<p>H0: COVID vaccination status have the same COVID test times.</p>
+<p>H1: COVID vaccination status have different COVID test times</p>
+<p>I use analysis of variance to test if different COVID vaccination status have the same COVID test times, and found pValue is 0.00107 which is significant less than 0.05, so refuse H0, and different COVID vaccination status have different COVID test times. In addition, the COVID vaccination status of ‘Not yet, but I want to’ is significally different with that of ‘I’m fully vaccinated’ and ‘I’m partially vaccinated’.</p>
+<pre class="r"><code>candidateData &lt;- DATA2x02[,c(2,7,8,12,14,17,18,24)]
+colnames(candidateData) &lt;-c(&quot;COVID_test&quot;,&quot;mathematical&quot;,&quot;R_coding&quot;,&quot;COVID_vaccination&quot;,&quot;Gender&quot;,&quot;stressed&quot;,&quot;loneliness&quot;,&quot;exercising&quot;)
+library(ggplot2)
+
+aov1 &lt;- aov(COVID_test ~ COVID_vaccination, candidateData)   
+summary(aov1)</code></pre>
+<pre><code>##                    Df Sum Sq Mean Sq F value  Pr(&gt;F)   
+## COVID_vaccination   3   58.5  19.501   5.578 0.00107 **
+## Residuals         202  706.3   3.496                   
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 2 observations deleted due to missingness</code></pre>
+<pre class="r"><code>tukey &lt;- TukeyHSD(aov1)
+tukey = as.data.frame(tukey$COVID_vaccination)
+tukey$pair = rownames(tukey)
+
+ggplot(tukey, aes(colour=cut(`p adj`, c(0, 0.01, 0.05, 1), 
+                           label=c(&quot;p&lt;0.01&quot;,&quot;p&lt;0.05&quot;,&quot;Non-Sig&quot;)))) +
+    theme_bw(base_size = 16)+
+    geom_hline(yintercept=0, lty=&quot;11&quot;, colour=&quot;grey30&quot;,size = 1) +
+    geom_errorbar(aes(pair, ymin=lwr, ymax=upr), width=0.2,size = 1) +
+    geom_point(aes(pair, diff),size = 2) +
+    labs(colour=&quot;&quot;)+
+    theme(axis.text.x = element_text(size =10,angle=90)) +
+    ggtitle(&#39;COVID vaccination status vs COVID test times&#39;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+</div>
+<div id="whether-different-gender-have-different-the-times-covid-test" class="section level4">
+<h4>2.2. whether different gender have different the times COVID test</h4>
+<p>H0: different gender have the same COVID test times.</p>
+<p>H1: different gender have different COVID test times</p>
+<p>I use analysis of variance to test if different Gender have the same COVID test times, and found pValue is 0.689 which is not significant less than 0.05, so recieve H0, and different gender have the same COVID test times.</p>
+<pre class="r"><code>table(candidateData$Gender)</code></pre>
+<pre><code>## 
+##            f            F       Famale        Femal       female       Female 
+##            1            1            1            1           27           41 
+##            M         male         Male         MALE          man          Man 
+##            4           33           88            1            1            2 
+##   Non-binary        Woman Woman/Female 
+##            1            2            1</code></pre>
+<pre class="r"><code>pos1 &lt;-which(candidateData$Gender%in%c(&quot;f&quot;,&quot;F&quot;,&quot;Famale&quot;,&quot;Femal&quot;,&quot;female&quot;,&quot;Female&quot;,&quot;Woman&quot;))
+pos2 &lt;-which(candidateData$Gender%in%c(&quot;M&quot;,&quot;male&quot;,&quot;Male&quot;,&quot;MALE&quot;,&quot;man&quot;,&quot;Man&quot;))
+candidateData[pos1,&quot;Gender&quot;] &lt;-&quot;female&quot;
+candidateData[pos2,&quot;Gender&quot;] &lt;-&quot;male&quot;
+pos &lt;-which(candidateData$Gender%in%c(&quot;female&quot;,&quot;male&quot;))
+candidateData2 &lt;-candidateData[pos,]
+
+aov2 &lt;- aov(COVID_test ~ Gender, candidateData2)   
+summary(aov2)</code></pre>
+<pre><code>##              Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Gender        1    0.6   0.610   0.161  0.689
+## Residuals   201  760.9   3.786</code></pre>
+<pre class="r"><code>ggplot(candidateData2, aes(x=Gender, y=COVID_test, fill=Gender)) + 
+  geom_boxplot() +
+  ggtitle(&#39;Gender vs COVID test times&#39;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+</div>
+<div id="whether-the-times-covid-test-related-with-how-many-hours-each-week-do-you-spend-exercising" class="section level4">
+<h4>2.3. whether the times COVID test related with How many hours each week do you spend exercising</h4>
+<p>H0: the times COVID test is not related with How many hours each week do you spend exercising.</p>
+<p>H1: the times COVID test is related with How many hours each week do you spend exercising.</p>
+<p>I use Pearson’s product-moment correlationto test if the times COVID test is related with How many hours each week do you spend exercising, and found the correlation efficient is 0.3047 with pValue is 1.038e-05 which is significant less than 0.05, so refuse H0, and the times COVID test is positively related with How many hours each week do you spend exercising.</p>
+<pre class="r"><code>candidateData &lt;-as.data.frame(candidateData)
+cor.test(candidateData$COVID_test, candidateData$exercising)</code></pre>
+<pre><code>## 
+##  Pearson&#39;s product-moment correlation
+## 
+## data:  candidateData$COVID_test and candidateData$exercising
+## t = 4.5243, df = 200, p-value = 1.038e-05
+## alternative hypothesis: true correlation is not equal to 0
+## 95 percent confidence interval:
+##  0.1739724 0.4248836
+## sample estimates:
+##       cor 
+## 0.3047053</code></pre>
+<pre class="r"><code>ggplot(candidateData, aes(x=exercising, y=COVID_test)) + 
+  geom_point() +
+  ggtitle(&#39;the times COVID test vs How many hours each week do you spend exercising&#39;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+</div>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>In this assignment, we found the following conlusions:</p>
+<ol style="list-style-type: decimal">
+<li>The number of COVID tests a student has taken in the past two months does’t follow a Poisson distribution.</li>
+<li>Different COVID vaccination status have different COVID test times. And the COVID vaccination status of ‘Not yet, but I want to’ is significally different with that of ‘I’m fully vaccinated’ and ‘I’m partially vaccinated’.</li>
+<li>The COVID test times between gender is the same.</li>
+<li>The times of COVID test is positively related with How many hours each week do you spend exercising.</li>
+</ol>
+</div>
+<div id="appendix" class="section level2">
+<h2>Appendix</h2>
+<p>The following References I used:</p>
+<ol style="list-style-type: decimal">
+<li>M. Friendly (2000), Visualizing Categorical Data. SAS Institute, Cary, NC.</li>
+<li>Chambers, J. M., Freeny, A and Heiberger, R. M. (1992) Analysis of variance; designed experiments. Chapter 5 of Statistical Models in S eds J. M. Chambers and T. J. Hastie, Wadsworth &amp; Brooks/Cole.</li>
+<li>D. J. Best &amp; D. E. Roberts (1975). Algorithm AS 89: The Upper Tail Probabilities of Spearman’s rho. Applied Statistics, 24, 377–379. doi: 10.2307/2347111.</li>
+<li>Myles Hollander &amp; Douglas A. Wolfe (1973), Nonparametric Statistical Methods. New York: John Wiley &amp; Sons. Pages 185–194 (Kendall and Spearman tests).</li>
+</ol>
+</div>
 
 
 
